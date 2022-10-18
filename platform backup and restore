@@ -1,4 +1,4 @@
-6. Enabling NooBAA database backup job
+1. Enabling NooBAA database backup job
     1. Login to OpenShift Container Platform cluster as an ocpadmin user
     2. Command execution -->    " br_operations policy disable -n openshift-storage -p noobaa-db-backup-restore "
     3. Expected Outcome    -->    " noobaa-db-backup-restore policy disabled "
@@ -8,7 +8,7 @@
     7. Expected Outcome    -->    " noobaa-db-backup-restore-openshift-storage   20 07 * * *   False     0        <none>          51m "
     8. Logout
     
-    7. Changing cron schedules and the number of localbackup copies to be retained for NooBaa
+    2. Changing cron schedules and the number of localbackup copies to be retained for NooBaa
     1. Login to OpenShift Container Platform cluster as an ocpadmin user
     2. Command execution -->    " oc patch --type=merge br noobaa-db-backup-restore -p '{"spec" : {"cronSpec" : "20 07 * * *" }}' -n openshift-storage "
     3. Expected Outcome    -->    " brpolicy.cbur.csf.nokia.com/noobaa-db-backup-restore patched "
@@ -22,7 +22,7 @@
     11. Expected Outcome    -->    " 7 "
     12. Logout
     
-    8. Disabling NooBaa database backup job
+    3. Disabling NooBaa database backup job
     1. Login to OpenShift Container Platform cluster as an ocpadmin user
     2. Command execution -->    " oc patch --type=merge br noobaa-db-backup-restore -p '{"spec" : {"autoUpdateCron" : false }}' -n openshift-storage "
     3. Expected Outcome    -->    " brpolicy.cbur.csf.nokia.com/noobaa-db-backup-restore patched "
@@ -32,7 +32,7 @@
     7. Expected Outcome    -->    "  "
     8. Logout
     
-    9.  Taking on-demand backup for NooBaa database
+    4.  Taking on-demand backup for NooBaa database
     1. Login to OpenShift Container Platform cluster as an ocpadmin user
     2. Command execution -->    " br_operations backup ondemand -n openshift-storage -p noobaa-db-backup-restore |grep message "
     3. Expected Outcome    -->  " " message": "backup task = c3d31d9e-4434-4ba5-9066-658ca5a8318c is on! " "
@@ -51,7 +51,7 @@
 } "
     8. Logout
     
-    10. Restoring NooBaa database from backup
+    5. Restoring NooBaa database from backup
     1. Login to OpenShift Container Platform cluster as an ocpadmin user
     2. Command execution -->    " oc patch -n openshift-storage storagecluster ocs-storagecluster --type merge --patch '{"spec": {"multiCloudGateway": {"reconcileStrategy": "ignore"}}}' "
     3. Expected Outcome    -->    " storagecluster.ocs.openshift.io/ocs-storagecluster patched "
