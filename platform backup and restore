@@ -1,0 +1,86 @@
+6. Enabling NooBAA database backup job
+    1. Login to OpenShift Container Platform cluster as an ocpadmin user
+    2. Command execution -->    " br_operations policy disable -n openshift-storage -p noobaa-db-backup-restore "
+    3. Expected Outcome    -->    " noobaa-db-backup-restore policy disabled "
+    4. Command execution -->    " br_operations cron enable -n openshift-storage -p noobaa-db-backup-restore "
+    5. Expected Outcome    -->    " noobaa-db-backup-restore policy enabled "
+    6. Command execution -->    " oc get cronjobs -n cal-shared-product | grep noobaa "
+    7. Expected Outcome    -->    " noobaa-db-backup-restore-openshift-storage   20 07 * * *   False     0        <none>          51m "
+    8. Logout
+    
+    7. Changing cron schedules and the number of localbackup copies to be retained for NooBaa
+    1. Login to OpenShift Container Platform cluster as an ocpadmin user
+    2. Command execution -->    " oc patch --type=merge br noobaa-db-backup-restore -p '{"spec" : {"cronSpec" : "20 07 * * *" }}' -n openshift-storage "
+    3. Expected Outcome    -->    " brpolicy.cbur.csf.nokia.com/noobaa-db-backup-restore patched "
+    4. Command execution -->    " oc patch --type=merge br noobaa-db-backup-restore -p '{"spec" : {"maxiCopy" : 7}}' -n openshift-storage "
+    5. Expected Outcome    -->    " brpolicy.cbur.csf.nokia.com/noobaa-db-backup-restore patched  "
+    6. Command execution -->    " br_operations cron enable -n openshift-storage -p noobaa-db-backup-restore "
+    7. Expected Outcome    -->    " noobaa-db-backup-restore : Success "
+    8. Command execution -->    " oc get cronjobs -n cal-shared-product | grep noobaa "
+    9. Expected Outcome    -->    " noobaa-db-backup-restore-openshift-storage   20 07 * * *   False     0        <none>          63m"
+    10. Command execution -->    " oc get br -nopenshift-storage noobaa-db-backup-restore -ojsonpath="{.spec.maxiCopy}" "
+    11. Expected Outcome    -->    " 7 "
+    12. Logout
+    
+    8. Disabling NooBaa database backup job
+    1. Login to OpenShift Container Platform cluster as an ocpadmin user
+    2. Command execution -->    " oc patch --type=merge br noobaa-db-backup-restore -p '{"spec" : {"autoUpdateCron" : false }}' -n openshift-storage "
+    3. Expected Outcome    -->    " brpolicy.cbur.csf.nokia.com/noobaa-db-backup-restore patched "
+    4. Command execution -->    " br_operations cron disable -n openshift-storage -p noobaa-db-backup-restore "
+    5. Expected Outcome    -->    " noobaa-db-backup-restore : Success "
+    6. Command execution -->    " oc get cronjobs -n cal-shared-product | grep noobaa "
+    7. Expected Outcome    -->    "  "
+    8. Logout
+    
+    9.  Taking on-demand backup for NooBaa database
+    1. Login to OpenShift Container Platform cluster as an ocpadmin user
+    2. Command execution -->    " br_operations backup ondemand -n openshift-storage -p noobaa-db-backup-restore |grep message "
+    3. Expected Outcome    -->  " " message": "backup task = c3d31d9e-4434-4ba5-9066-658ca5a8318c is on! " "
+    4. Command execution -->    " br_operations status task --id ${task_id} | grep status "
+    5. Expected Outcome    -->    " br_operations status task --id 1d9c4216-d8eb-4899-95fb-bdf30933f2d0 "
+    6. Command execution -->    " br_operations status task --id 1d9c4216-d8eb-4899-95fb-bdf30933f2d0 "
+    7. Expected Outcome    -->    " {
+  "apiVersion": "v1",
+  "code": 404,
+  "details": {},
+  "kind": "Status",
+  "message": "The task id doesn't exist any more. It may be deleted because of expiration of 7 days.",
+  "metadata": {},
+  "reason": "",
+  "status": "Success"
+} "
+    8. Logout
+    
+    10. Restoring NooBaa database from backup
+    1. Login to OpenShift Container Platform cluster as an ocpadmin user
+    2. Command execution -->    " oc patch -n openshift-storage storagecluster ocs-storagecluster --type merge --patch '{"spec": {"multiCloudGateway": {"reconcileStrategy": "ignore"}}}' "
+    3. Expected Outcome    -->    " storagecluster.ocs.openshift.io/ocs-storagecluster patched "
+    4. Command execution -->    " oc get pods -n openshift-storage --no-headers=true |grep noobaa-operator|awk '{print $1}' |xargs oc delete pod -n openshift-storage | grep noobaa-operator "
+    5. Expected Outcome    -->    " pod "noobaa-operator-85b586f7b-fr68x" deleted "
+    6. Command execution -->    " br_operations backup list -n openshift-storage -p noobaa-db-backup-restore "
+    7. Expected Outcome    -->    " {
+  "apiVersion": "v1",
+  "code": 200,
+  "details": {},
+  "kind": "Status",
+  "message": [
+    "20221017113710_e03_LOCAL_openshift-storage_noobaa-db-backup-restore",
+    "20221017115213_e03_LOCAL_openshift-storage_noobaa-db-backup-restore",
+    "20221017120742_e03_LOCAL_openshift-storage_noobaa-db-backup-restore",
+    "20221017171542_e03_LOCAL_openshift-storage_noobaa-db-backup-restore",
+    "20221017172719_e03_LOCAL_openshift-storage_noobaa-db-backup-restore"
+  ],
+  "metadata": {},
+  "reason": "",
+  "status": "Success"
+} "
+    8. Command execution -->    " br_operations restore backup -n openshift-storage -p noobaa-db-backup-restore | grep message "
+    9. Expected Outcome    -->    " "message": "restore task = 55546aac-5ef5-46f5-8373-133a02943edd is on!", "
+    10.Command execution -->    " br_operations status task --id 1d9c4216-d8eb-4899-95fb-bdf30933f2d0 | grep status "
+    11. Expected Outcome    -->    " "status": "Success" "
+    12.Command execution -->    " oc patch -n openshift-storage storagecluster ocs-storagecluster --type merge --patch '{"spec": {"multiCloudGateway": {"reconcileStrategy": "manage"}}}' "
+    13. Expected Outcome    -->    " storagecluster.ocs.openshift.io/ocs-storagecluster patched "
+    14.Command execution -->    " oc delete pods -n openshift-storage noobaa-core-0 noobaa-db-pg-0 "
+    13. Expected Outcome    -->    " pod "noobaa-core-0" deleted
+pod "noobaa-db-pg-0" deleted "
+    14. Logout
